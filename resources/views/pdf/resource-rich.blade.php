@@ -79,7 +79,6 @@
         .content-section {
             margin-bottom: 25px;
             page-break-inside: avoid;
-            overflow: hidden; /* clearfix için */
         }
         
         .content-section h2 {
@@ -90,38 +89,49 @@
             margin-bottom: 10px;
         }
         
-        /* Metin ve resim yan yana düzeni */
-        .content-wrapper {
-            display: table;
-            width: 100%;
-        }
-        
         .content-section .text {
             text-align: justify;
             margin-bottom: 10px;
         }
         
-        .content-section.has-image .text {
-            display: table-cell;
-            vertical-align: top;
-            width: 65%;
-            padding-right: 15px;
-        }
-        
+        /* Resim aşağıda (varsayılan) */
         .content-section .image-container {
-            display: table-cell;
-            vertical-align: top;
-            width: 35%;
             text-align: center;
+            margin: 15px 0;
         }
         
         .content-section .image-container img {
+            max-width: 250px;
+            max-height: 180px;
+        }
+        
+        /* Resim yanda */
+        .content-section.image-right {
+            overflow: hidden;
+        }
+        
+        .content-section.image-right .content-wrapper {
+            display: table;
+            width: 100%;
+        }
+        
+        .content-section.image-right .text {
+            display: table-cell;
+            vertical-align: top;
+            width: 60%;
+            padding-right: 15px;
+        }
+        
+        .content-section.image-right .image-container {
+            display: table-cell;
+            vertical-align: top;
+            width: 40%;
+            margin: 0;
+        }
+        
+        .content-section.image-right .image-container img {
             max-width: 100%;
             max-height: 150px;
-            border: 1px solid #e0e0e0;
-            border-radius: 4px;
-            padding: 5px;
-            background: #fafafa;
         }
         
         .content-section .image-caption {
@@ -176,12 +186,27 @@
     @foreach($content as $section)
         @php 
             $hasImage = !empty($section['image_url']);
+            $imagePosition = $section['image_position'] ?? 'bottom';
             if ($hasImage) $figureCounter++;
         @endphp
-        <div class="content-section {{ $hasImage ? 'has-image' : '' }}">
+        <div class="content-section {{ $hasImage && $imagePosition === 'right' ? 'image-right' : '' }}">
             <h2>{{ $section['heading'] }}</h2>
             
-            <div class="content-wrapper">
+            @if($hasImage && $imagePosition === 'right')
+                {{-- Resim yanda --}}
+                <div class="content-wrapper">
+                    <div class="text">
+                        {!! nl2br(e($section['text'])) !!}
+                    </div>
+                    <div class="image-container">
+                        <img src="{{ $section['image_url'] }}" alt="{{ $section['heading'] }}">
+                        <div class="image-caption">
+                            <span class="figure-number">Şekil.{{ $figureCounter }}</span>@if(!empty($section['image_caption'])): {{ $section['image_caption'] }}@endif
+                        </div>
+                    </div>
+                </div>
+            @else
+                {{-- Resim aşağıda (varsayılan) --}}
                 <div class="text">
                     {!! nl2br(e($section['text'])) !!}
                 </div>
@@ -194,7 +219,7 @@
                         </div>
                     </div>
                 @endif
-            </div>
+            @endif
             
             @if(!empty($section['teacher_note']))
                 <div class="teacher-note">

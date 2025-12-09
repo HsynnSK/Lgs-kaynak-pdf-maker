@@ -44,6 +44,7 @@ class PdfResourceController extends Controller
             'sections.*.text' => 'required|string',
             'sections.*.image_url' => 'nullable|string',
             'sections.*.image_caption' => 'nullable|string|max:255',
+            'sections.*.image_position' => 'nullable|string|in:bottom,right',
             'sections.*.teacher_note' => 'nullable|string',
             'sections.*.order' => 'nullable|integer',
         ]);
@@ -65,6 +66,7 @@ class PdfResourceController extends Controller
                     'text' => $section['text'],
                     'image_url' => $section['image_url'] ?? null,
                     'image_caption' => $section['image_caption'] ?? null,
+                    'image_position' => $section['image_position'] ?? 'bottom',
                     'teacher_note' => $section['teacher_note'] ?? null,
                     'order' => $section['order'] ?? $index + 1,
                 ]);
@@ -127,6 +129,7 @@ class PdfResourceController extends Controller
             'sections.*.text' => 'required|string',
             'sections.*.image_url' => 'nullable|string',
             'sections.*.image_caption' => 'nullable|string|max:255',
+            'sections.*.image_position' => 'nullable|string|in:bottom,right',
             'sections.*.teacher_note' => 'nullable|string',
             'sections.*.order' => 'nullable|integer',
         ]);
@@ -152,6 +155,7 @@ class PdfResourceController extends Controller
                     'text' => $section['text'],
                     'image_url' => $section['image_url'] ?? null,
                     'image_caption' => $section['image_caption'] ?? null,
+                    'image_position' => $section['image_position'] ?? 'bottom',
                     'teacher_note' => $section['teacher_note'] ?? null,
                     'order' => $section['order'] ?? $index + 1,
                 ]);
@@ -232,6 +236,7 @@ class PdfResourceController extends Controller
                     'text' => $section->text,
                     'image_url' => $imageUrl,
                     'image_caption' => $section->image_caption,
+                    'image_position' => $section->image_position ?? 'bottom',
                     'teacher_note' => $section->teacher_note,
                 ];
             })->toArray(),

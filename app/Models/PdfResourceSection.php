@@ -13,13 +13,12 @@ class PdfResourceSection extends Model
         'text',
         'image_url',
         'image_caption',
+        'image_position', // 'bottom' (aşağıda) veya 'right' (yanda)
         'teacher_note',
         'order',
     ];
 
-    /**
-     * Ana kaynak ilişkisi
-     */
+    // Ana kaynak ilişkisi
     public function pdfResource(): BelongsTo
     {
         return $this->belongsTo(PdfResource::class);

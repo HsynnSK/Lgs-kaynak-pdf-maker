@@ -12,9 +12,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class PdfResourceController extends Controller
 {
-    /**
-     * Tüm kaynakları listele
-     */
+    // Tüm kaynakları listele
     public function index(Request $request): JsonResponse
     {
         Log::info('PDF_RESOURCE', ['action' => 'index']);
@@ -29,19 +27,18 @@ class PdfResourceController extends Controller
         ]);
     }
 
-    /**
-     * Yeni kaynak oluştur
-     */
+    // Yeni kaynak oluştur
     public function store(Request $request): JsonResponse
     {
         Log::info('PDF_RESOURCE', ['action' => 'store', 'data' => $request->all()]);
 
-        // Validation
+        // Gelen verileri doğrula
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'subtitle' => 'nullable|string|max:255',
             'subject' => 'required|string|max:100',
             'level' => 'required|string|max:100',
+            'theme' => 'nullable|string|in:blue,orange,green,purple,red,teal,pink,dark',
             'sections' => 'array',
             'sections.*.heading' => 'required|string|max:255',
             'sections.*.text' => 'required|string',
@@ -51,15 +48,16 @@ class PdfResourceController extends Controller
             'sections.*.order' => 'nullable|integer',
         ]);
 
-        // Resource oluştur
+        // Yeni kaynak oluştur
         $resource = PdfResource::create([
             'title' => $validated['title'],
             'subtitle' => $validated['subtitle'] ?? null,
             'subject' => $validated['subject'],
             'level' => $validated['level'],
+            'theme' => $validated['theme'] ?? 'blue',
         ]);
 
-        // Sections oluştur
+        // Bölümleri oluştur
         if (isset($validated['sections'])) {
             foreach ($validated['sections'] as $index => $section) {
                 $resource->sections()->create([
@@ -82,9 +80,7 @@ class PdfResourceController extends Controller
         ], 201);
     }
 
-    /**
-     * Tek kaynak getir
-     */
+    // Tek kaynak getir (ID ile)
     public function show(int $id): JsonResponse
     {
         Log::info('PDF_RESOURCE', ['action' => 'show', 'id' => $id]);
@@ -104,9 +100,7 @@ class PdfResourceController extends Controller
         ]);
     }
 
-    /**
-     * Kaynak güncelle
-     */
+    // Kaynak güncelle
     public function update(Request $request, int $id): JsonResponse
     {
         Log::info('PDF_RESOURCE', ['action' => 'update', 'id' => $id, 'data' => $request->all()]);
@@ -120,12 +114,13 @@ class PdfResourceController extends Controller
             ], 404);
         }
 
-        // Validation
+        // Gelen verileri doğrula
         $validated = $request->validate([
             'title' => 'sometimes|required|string|max:255',
             'subtitle' => 'nullable|string|max:255',
             'subject' => 'sometimes|required|string|max:100',
             'level' => 'sometimes|required|string|max:100',
+            'theme' => 'nullable|string|in:blue,orange,green,purple,red,teal,pink,dark',
             'sections' => 'array',
             'sections.*.id' => 'nullable|integer',
             'sections.*.heading' => 'required|string|max:255',
@@ -136,20 +131,21 @@ class PdfResourceController extends Controller
             'sections.*.order' => 'nullable|integer',
         ]);
 
-        // Resource güncelle
+        // Kaynak bilgilerini güncelle
         $resource->update([
             'title' => $validated['title'] ?? $resource->title,
             'subtitle' => $validated['subtitle'] ?? $resource->subtitle,
             'subject' => $validated['subject'] ?? $resource->subject,
             'level' => $validated['level'] ?? $resource->level,
+            'theme' => $validated['theme'] ?? $resource->theme,
         ]);
 
-        // Sections güncelle (varsa)
+        // Bölümleri güncelle (varsa)
         if (isset($validated['sections'])) {
-            // Mevcut sections'ları sil
+            // Önce mevcut bölümleri sil
             $resource->sections()->delete();
             
-            // Yeni sections oluştur
+            // Yeni bölümleri oluştur
             foreach ($validated['sections'] as $index => $section) {
                 $resource->sections()->create([
                     'heading' => $section['heading'],
@@ -171,9 +167,7 @@ class PdfResourceController extends Controller
         ]);
     }
 
-    /**
-     * Kaynak sil
-     */
+    // Kaynak sil
     public function destroy(int $id): JsonResponse
     {
         Log::info('PDF_RESOURCE', ['action' => 'destroy', 'id' => $id]);
@@ -195,9 +189,7 @@ class PdfResourceController extends Controller
         ]);
     }
 
-    /**
-     * PDF olarak indir/görüntüle
-     */
+    // PDF olarak indir veya tarayıcıda görüntüle
     public function downloadPdf(int $id)
     {
         Log::info('PDF_RESOURCE', ['action' => 'downloadPdf', 'id' => $id]);
@@ -216,6 +208,7 @@ class PdfResourceController extends Controller
             'subtitle' => $resource->subtitle,
             'subject' => $resource->subject,
             'level' => $resource->level,
+            'theme' => $resource->getThemeColors(),
             'content' => $resource->sections->map(function ($section) {
                 // Storage'daki resmi tam path olarak al (DOMPDF için)
                 $imageUrl = null;
@@ -252,9 +245,7 @@ class PdfResourceController extends Controller
         return $pdf->stream($filename);
     }
 
-    /**
-     * Demo PDF (test için)
-     */
+    // Demo PDF - test için (veritabanı gerektirmez)
     public function demoPdf()
     {
         Log::info('PDF_RESOURCE', ['action' => 'demoPdf']);

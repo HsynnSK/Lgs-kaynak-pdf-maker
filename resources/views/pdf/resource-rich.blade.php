@@ -4,7 +4,39 @@
     <meta charset="UTF-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <title>{{ $title }}</title>
+    
+    @php
+        // Varsayılan tema değerleri (eğer tema gönderilmemişse)
+        $defaultTheme = [
+            'primary' => '#4a90d9',
+            'secondary' => '#2c3e50',
+            'accent' => '#3498db',
+            'light' => '#ecf0f1',
+            'dark' => '#1a5276',
+            'text' => '#333333',
+            'note_bg' => '#fff3cd',
+            'note_border' => '#ffc107',
+            'note_text' => '#856404',
+        ];
+        $theme = $theme ?? $defaultTheme;
+    @endphp
+    
     <style>
+        /* ================================
+           TEMA RENKLERİ (DİNAMİK)
+           ================================ */
+        :root {
+            --primary: {{ $theme['primary'] }};
+            --secondary: {{ $theme['secondary'] }};
+            --accent: {{ $theme['accent'] }};
+            --light: {{ $theme['light'] }};
+            --dark: {{ $theme['dark'] }};
+            --text: {{ $theme['text'] }};
+            --note-bg: {{ $theme['note_bg'] }};
+            --note-border: {{ $theme['note_border'] }};
+            --note-text: {{ $theme['note_text'] }};
+        }
+        
         @page {
             margin: 20mm 15mm;
         }
@@ -13,18 +45,18 @@
             font-family: DejaVu Sans, sans-serif;
             font-size: 12px;
             line-height: 1.6;
-            color: #333;
+            color: {{ $theme['text'] }};
         }
         
         .header {
             text-align: center;
-            border-bottom: 3px solid #4a90d9;
+            border-bottom: 3px solid {{ $theme['primary'] }};
             padding-bottom: 15px;
             margin-bottom: 25px;
         }
         
         .header h1 {
-            color: #2c3e50;
+            color: {{ $theme['secondary'] }};
             font-size: 24px;
             margin: 0 0 5px 0;
         }
@@ -37,7 +69,7 @@
         
         .meta-info {
             display: inline-block;
-            background: #ecf0f1;
+            background: {{ $theme['light'] }};
             padding: 5px 15px;
             border-radius: 15px;
             font-size: 11px;
@@ -47,14 +79,21 @@
         .content-section {
             margin-bottom: 25px;
             page-break-inside: avoid;
+            overflow: hidden; /* clearfix için */
         }
         
         .content-section h2 {
-            color: #4a90d9;
+            color: {{ $theme['primary'] }};
             font-size: 16px;
-            border-left: 4px solid #4a90d9;
+            border-left: 4px solid {{ $theme['primary'] }};
             padding-left: 10px;
             margin-bottom: 10px;
+        }
+        
+        /* Metin ve resim yan yana düzeni */
+        .content-wrapper {
+            display: table;
+            width: 100%;
         }
         
         .content-section .text {
@@ -62,21 +101,39 @@
             margin-bottom: 10px;
         }
         
+        .content-section.has-image .text {
+            display: table-cell;
+            vertical-align: top;
+            width: 65%;
+            padding-right: 15px;
+        }
+        
         .content-section .image-container {
+            display: table-cell;
+            vertical-align: top;
+            width: 35%;
             text-align: center;
-            margin: 15px 0;
         }
         
         .content-section .image-container img {
-            max-width: 200px;
+            max-width: 100%;
             max-height: 150px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            padding: 5px;
+            background: #fafafa;
         }
         
         .content-section .image-caption {
             font-size: 10px;
-            color: #7f8c8d;
-            font-style: italic;
-            margin-top: 5px;
+            color: #555;
+            margin-top: 8px;
+            text-align: center;
+        }
+        
+        .content-section .image-caption .figure-number {
+            font-weight: bold;
+            color: {{ $theme['primary'] }};
         }
         
         .teacher-note {
@@ -101,7 +158,7 @@
             text-align: center;
             font-size: 10px;
             color: #95a5a6;
-            border-top: 1px solid #ecf0f1;
+            border-top: 1px solid {{ $theme['light'] }};
             padding-top: 10px;
         }
     </style>
@@ -115,22 +172,29 @@
         </div>
     </div>
 
+    @php $figureCounter = 0; @endphp
     @foreach($content as $section)
-        <div class="content-section">
+        @php 
+            $hasImage = !empty($section['image_url']);
+            if ($hasImage) $figureCounter++;
+        @endphp
+        <div class="content-section {{ $hasImage ? 'has-image' : '' }}">
             <h2>{{ $section['heading'] }}</h2>
             
-            <div class="text">
-                {{ $section['text'] }}
-            </div>
-            
-            @if(!empty($section['image_url']))
-                <div class="image-container">
-                    <img src="{{ $section['image_url'] }}" alt="{{ $section['heading'] }}">
-                    @if(!empty($section['image_caption']))
-                        <div class="image-caption">{{ $section['image_caption'] }}</div>
-                    @endif
+            <div class="content-wrapper">
+                <div class="text">
+                    {!! nl2br(e($section['text'])) !!}
                 </div>
-            @endif
+                
+                @if($hasImage)
+                    <div class="image-container">
+                        <img src="{{ $section['image_url'] }}" alt="{{ $section['heading'] }}">
+                        <div class="image-caption">
+                            <span class="figure-number">Şekil.{{ $figureCounter }}</span>@if(!empty($section['image_caption'])): {{ $section['image_caption'] }}@endif
+                        </div>
+                    </div>
+                @endif
+            </div>
             
             @if(!empty($section['teacher_note']))
                 <div class="teacher-note">
